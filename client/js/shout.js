@@ -83,8 +83,10 @@ $(function() {
 		}
 		login.find(".btn").prop("disabled", false);
 		var token = $.cookie("token");
+		var authCookie = $.cookie("AUTH_COOKIE");
+		console.log($.cookie());
 		if (token) {
-			$.removeCookie("token");
+			// $.removeCookie("token");  // Why am I removing this? Can't remember!
 			socket.emit("auth", {token: token});
 		}
 		if (body.hasClass("signed-out")) {
@@ -110,6 +112,9 @@ $(function() {
 			.html("")
 			.next()
 			.show();
+
+		$("#submitme").submit();
+		console.log($("#submitme"));
 	});
 
 	socket.on("init", function(data) {

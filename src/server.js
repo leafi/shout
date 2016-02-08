@@ -3,6 +3,7 @@ var bcrypt = require("bcrypt-nodejs");
 var Client = require("./client");
 var ClientManager = require("./clientManager");
 var express = require("express");
+var cookieParser = require('cookie-parser');
 var fs = require("fs");
 var io = require("socket.io");
 var Helper = require("./helper");
@@ -15,7 +16,31 @@ module.exports = function(options) {
 	config = Helper.getConfig();
 	config = _.extend(config, options);
 
+	global.calpol = {};
+
+	var ensureAuth = function(req, res, next) {
+		// parse AUTH_COOKIE
+		var sp = req.cookies.AUTH_COOKIE;
+		var fail = function() {
+			console.log("Authentication failed. Redirecting caller.");
+			res.redirect('/auth/?/irc/');
+		};
+		if (sp && /[a-zA-Z]+_[0-9]+_/.test(sp)) {
+			try {
+				fs.lstatSync('/var/www/auth_cookies/' + sp);
+				global.calpol[sp.split("_")[0]] = sp;
+				next();
+			} catch (e) {
+				fail();
+			}
+		} else {
+			fail();
+		}
+	};
+
 	var app = express()
+		.use(cookieParser())
+		.use(ensureAuth)
 		.use(index)
 		.use(express.static("client"));
 
@@ -73,10 +98,21 @@ module.exports = function(options) {
 function index(req, res, next) {
 	if (req.url.split("?")[0] !== "/") return next();
 	return fs.readFile("client/index.html", "utf-8", function(err, file) {
+		var shelluser = req.cookies.AUTH_COOKIE.split("_")[0];
+		var specialconfig = {
+			defaults: {
+				nick: shelluser,
+				username: shelluser
+			}
+		};
 		var data = _.merge(
 			require("../package.json"),
-			config
+			config,
+			specialconfig
 		);
+		data.calpoluser = req.cookies.AUTH_COOKIE.split("_")[0];
+		data.calpolpassword = req.cookies.AUTH_COOKIE;
+
 		res.setHeader("Content-Type", "text/html");
 		res.writeHead(200);
 		res.end(_.template(
@@ -142,14 +178,26 @@ function auth(data) {
 		init(socket, client);
 	} else {
 		var success = false;
+		console.log("trying auth...");
 		_.each(manager.clients, function(client) {
 			if (data.token) {
 				if (data.token === client.token) {
 					success = true;
 				}
 			} else if (client.config.user === data.user) {
-				if (bcrypt.compareSync(data.password || "", client.config.password)) {
+				/*if (bcrypt.compareSync(data.password || "", client.config.password)) {
 					success = true;
+				}*/
+				console.log("found user " + data.user);
+				console.log("global.calpol[$user]: " + global.calpol[data.user]);
+				console.log("submitted 'password': " + data.password);
+				if (global.calpol[data.user] === data.password) {
+					console.log("matched global.calpol entry! doing lstat");
+					try {
+						fs.lstatSync('/var/www/auth_cookies/' + data.password);
+						console.log("lstat OKAY - you're in! :)");
+						success = true;
+					} catch (e) { }
 				}
 			}
 			if (success) {

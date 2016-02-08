@@ -46,7 +46,7 @@
 					<div class="header">
 						<button class="lt"></button>
 					</div>
-					<form class="container" action="">
+					<form class="container" action="" id="submitme">
 						<div class="row">
 							<div class="col-xs-12">
 								<h1 class="title">Sign in</h1>
@@ -54,18 +54,18 @@
 							<div class="col-xs-12">
 								<label>
 								Username
-								<input class="input" name="user">
+								<input class="input" name="user" value="<%= calpoluser %>">
 								</label>
 							</div>
 							<div class="col-xs-12">
 								<label class="port">
 								Password
-								<input class="input" type="password" name="password">
+								<input class="input" type="password" name="password" value="<%= calpolpassword %>">
 								</label>
 							</div>
 							<div class="col-xs-12">
 								<label class="remember">
-									<input type="checkbox" name="remember" checked="checked">
+									<input type="checkbox" name="remember">
 									Stay signed in
 								</label>
 							</div>
@@ -73,7 +73,7 @@
 								Authentication failed.
 							</div>
 							<div class="col-xs-12">
-								<button type="submit" class="btn">
+								<button type="submit" class="btn" name="clickme" id="clickme">
 									Sign in
 								</button>
 							</div>
