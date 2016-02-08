@@ -1,5 +1,5 @@
 $(function() {
-	var socket = io({path:"./socket.io/"});
+	var socket = io({path:"/irc/socket.io/"});
 	var commands = [
 		"/close",
 		"/connect",
